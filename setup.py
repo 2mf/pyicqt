@@ -6,6 +6,7 @@ install_requires = [
     "MySQL-python==1.2.5",
     "psycopg2==2.6.1",
     "nevow==0.13.0",
+    "pillow>=3.1.1",
     "twisted>=12.3.0",
 ]
 

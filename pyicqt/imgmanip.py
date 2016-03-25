@@ -5,7 +5,7 @@ from pyicqt import config
 
 if not config.disableAvatars:
     try:
-        import Image
+        from PIL import Image
         import StringIO
 
         def convertToPNG(imageData):
