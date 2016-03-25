@@ -1,27 +1,26 @@
 # Copyright 2004-2005 Daniel Henninger <jadestorm@nc.rr.com>
 # Licensed for distribution under the GPL version 2, check COPYING for details
 
+import os.path
+
 from nevow import rend, loaders, inevow, static
-from nevow import tags as T
-#from twisted.protocols import http
-from twisted.web import microdom
+from nevow import tags
+
+from pyicqt.debug import LogEvent, INFO, WARN, ERROR
+from pyicqt import config, legacy, lang, avatar
+from pyicqt.tlib.httpcompat import http
+from pyicqt.web.xmppcred import XMPPRealm, XMPPChecker, IXMPPAvatar
+
 from twisted.internet import reactor
 from twisted.cred import portal, credentials
-from pyicqt.debug import LogEvent, INFO, WARN, ERROR
-from pyicqt import config
-from pyicqt import legacy
-import sys
-import os
-import os.path
-from pyicqt import lang
-import string
-from pyicqt import avatar
-from pyicqt.web.xmppcred import XMPPRealm, XMPPChecker, IXMPPAvatar
-from twisted.words.protocols.jabber.jid import internJID
-from pyicqt.tlib.httpcompat import http
+
+from twisted.words.protocols.jabber.jid import internJID, InvalidFormat
 
 
-X = os.path.sep
+module_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(module_dir, 'data')
+images_dir = os.path.join(data_dir, 'www', 'images')
+css_dir = os.path.join(data_dir, 'www', 'css')
 
 # Avatars Node
 
@@ -36,7 +35,9 @@ class WebInterface_avatars(rend.Page):
 # Template Node
 class WebInterface_template(rend.Page):
     addSlash = True
-    docFactory = loaders.xmlfile('data' + X + 'www' + X + 'template.html')
+
+    docFactory = loaders.xmlfile(
+        os.path.join(data_dir, 'www', 'template.html'))
 
     def __init__(self, pytrans):
         self.pytrans = pytrans
@@ -89,25 +90,35 @@ class WebInterface_template(rend.Page):
         request = inevow.IRequest(ctx)
         username = request.getUser()
 
-        ret = T.table(border=0, cellspacing=3, cellpadding=3)
-        row = T.tr(valign="middle")
-        row[T.td(_class="menuentry", width="150", align="center", onclick="self.location='/account/'", onmouseover="this.className='menuentrypressed';",
-                 onmouseout="this.className='menuentry';")[T.a(_class="menuentry", href="/account/")["Account"]]]
+        ret = tags.table(border=0, cellspacing=3, cellpadding=3)
+        row = tags.tr(valign="middle")
+        row[tags.td(_class="menuentry", width="150", align="center",
+                    onclick="self.location='/account/'",
+                    onmouseover="this.className='menuentrypressed';",
+                    onmouseout="this.className='menuentry';")
+            [tags.a(_class="menuentry", href="/account/")["Account"]]]
 
         if config.admins.count(username) > 0:
-            row[T.td(_class="menuentry", width="150", align="center", onclick="self.location='/status/'", onmouseover="this.className='menuentrypressed';",
-                     onmouseout="this.className='menuentry';")[T.a(_class="menuentry", href="/status/")["Status"]]]
-            row[T.td(_class="menuentry", width="150", align="center", onclick="self.location='/config/'", onmouseover="this.className='menuentrypressed';",
-                     onmouseout="this.className='menuentry';")[T.a(_class="menuentry", href="/config/")["Configuration"]]]
-            row[T.td(_class="menuentry", width="150", align="center", onclick="self.location='/controls/'", onmouseover="this.className='menuentrypressed';",
-                     onmouseout="this.className='menuentry';")[T.a(_class="menuentry", href="/controls/")["Controls"]]]
-
-        ret[row]
+            row[tags.td(_class="menuentry", width="150", align="center",
+                        onclick="self.location='/status/'",
+                        onmouseover="this.className='menuentrypressed';",
+                        onmouseout="this.className='menuentry';")
+                [tags.a(_class="menuentry", href="/status/")["Status"]]]
+            row[tags.td(_class="menuentry", width="150", align="center",
+                        onclick="self.location='/config/'",
+                        onmouseover="this.className='menuentrypressed';",
+                        onmouseout="this.className='menuentry';")
+                [tags.a(_class="menuentry", href="/config/")["Configuration"]]]
+            row[tags.td(_class="menuentry", width="150", align="center",
+                        onclick="self.location='/controls/'",
+                        onmouseover="this.className='menuentrypressed';",
+                        onmouseout="this.className='menuentry';")
+                [tags.a(_class="menuentry", href="/controls/")["Controls"]]]
 
         return ret
 
-    child_images = static.File('data' + X + 'www' + X + 'images' + X)
-    child_css = static.File('data' + X + 'www' + X + 'css' + X)
+    child_images = static.File(images_dir)
+    child_css = static.File(css_dir)
     child_avatars = WebInterface_avatars()
 
 
@@ -164,13 +175,13 @@ class WebInterface_account(WebInterface_template):
         request = inevow.IRequest(ctx)
         username = request.getUser()
 
-        ret = T.table(border=0, cellspacing=5, cellpadding=2)
-        row = T.tr(height=25)[
-            T.th["UIN/Screen Name"],
-            T.th["Nickname"],
-            T.th["Network"],
-            T.th["Avatar"],
-            T.th["Status"]
+        ret = tags.table(border=0, cellspacing=5, cellpadding=2)
+        row = tags.tr(height=25)[
+            tags.th["UIN/Screen Name"],
+            tags.th["Nickname"],
+            tags.th["Network"],
+            tags.th["Avatar"],
+            tags.th["Status"]
         ]
         ret[row]
         roster = self.pytrans.xdb.getList("roster", username)
@@ -183,21 +194,23 @@ class WebInterface_account(WebInterface_template):
                 network = "AIM"
             avatar = "-"
             if not config.disableAvatars and item[1].has_key("shahash"):
-                avatar = T.a(href=("/avatars/%s" % item[1]["shahash"]))[
-                    T.img(
+                avatar = tags.a(href=("/avatars/%s" % item[1]["shahash"]))[
+                    tags.img(
                         border=0, height=25, src=("/avatars/%s" % item[1]["shahash"]))
                 ]
             nickname = "-"
-            if item[1].has_key("nickname"):
+            if "nickname" in item[1]:
                 nickname = item[1]["nickname"]
             else:
-                if self.pytrans.sessions.has_key(username) and self.pytrans.sessions[username].ready:
+                if username in self.pytrans.sessions and \
+                        self.pytrans.sessions[username].ready:
                     c = self.pytrans.sessions[username].contactList.getContact(
                         "%s@%s" % (item[0], config.jid))
                     if c.nickname and c.nickname != "":
                         nickname = c.nickname
             status = "-"
-            if self.pytrans.sessions.has_key(username) and self.pytrans.sessions[username].ready:
+            if username in self.pytrans.sessions and \
+                    self.pytrans.sessions[username].ready:
                 c = self.pytrans.sessions[username].contactList.getContact(
                     "%s@%s" % (item[0], config.jid))
                 status = c.ptype
@@ -205,12 +218,12 @@ class WebInterface_account(WebInterface_template):
                     status = c.show
                     if not status:
                         status = "available"
-            row = T.tr(height=25)[
-                T.td(height=25, align="middle")[item[0]],
-                T.td(height=25, align="middle")[nickname],
-                T.td(height=25, align="middle")[network],
-                T.td(height=25, align="middle")[avatar],
-                T.td(height=25, align="middle")[status]
+            row = tags.tr(height=25)[
+                tags.td(height=25, align="middle")[item[0]],
+                tags.td(height=25, align="middle")[nickname],
+                tags.td(height=25, align="middle")[network],
+                tags.td(height=25, align="middle")[avatar],
+                tags.td(height=25, align="middle")[status]
             ]
             ret[row]
         return ret
@@ -238,15 +251,15 @@ class WebInterface_status(WebInterface_template):
 """)
 
     def render_statistics(self, ctx, data):
-        ret = T.table(border=0, width="100%", cellspacing=5, cellpadding=2)
+        ret = tags.table(border=0, width="100%", cellspacing=5, cellpadding=2)
         for key in self.pytrans.serviceplugins['Statistics'].stats:
             label = lang.get("statistics_%s" % key, config.lang)
             description = lang.get("statistics_%s_Desc" % key, config.lang)
 
-            row = T.tr[
-                T.th(align="right")[label + ":"],
-                T.td[self.pytrans.serviceplugins['Statistics'].stats[key]],
-                T.td[description]
+            row = tags.tr[
+                tags.th(align="right")[label + ":"],
+                tags.td[self.pytrans.serviceplugins['Statistics'].stats[key]],
+                tags.td[description]
             ]
             ret[row]
         return ret
@@ -255,23 +268,23 @@ class WebInterface_status(WebInterface_template):
         if len(self.pytrans.sessions) <= 0:
             return "No active sessions."
 
-        ret = T.table(border=0, width="100%", cellspacing=5, cellpadding=2)
-        row = T.tr[
-            T.th["User"],
-            T.th["Incoming Messages"],
-            T.th["Outgoing Messages"],
-            T.th["Connections"]
+        ret = tags.table(border=0, width="100%", cellspacing=5, cellpadding=2)
+        row = tags.tr[
+            tags.th["User"],
+            tags.th["Incoming Messages"],
+            tags.th["Outgoing Messages"],
+            tags.th["Connections"]
         ]
         ret[row]
         for key in self.pytrans.sessions:
             jid = self.pytrans.sessions[key].jabberID
-            row = T.tr[
-                T.td[jid],
-                T.td(align="center")[self.pytrans.serviceplugins[
+            row = tags.tr[
+                tags.td[jid],
+                tags.td(align="center")[self.pytrans.serviceplugins[
                     'Statistics'].sessionstats[jid]['IncomingMessages']],
-                T.td(align="center")[self.pytrans.serviceplugins[
+                tags.td(align="center")[self.pytrans.serviceplugins[
                     'Statistics'].sessionstats[jid]['OutgoingMessages']],
-                T.td(align="center")[
+                tags.td(align="center")[
                     self.pytrans.serviceplugins['Statistics'].sessionstats[jid]['Connections']]
             ]
             ret[row]
@@ -296,7 +309,7 @@ class WebInterface_config(WebInterface_template):
 """)
 
     def render_config(self, ctx, data):
-        table = T.table(border=0)
+        table = tags.table(border=0)
         for key in config.__dict__.keys():
             if key[0] == "_":
                 continue
@@ -304,7 +317,7 @@ class WebInterface_config(WebInterface_template):
                 setting = "**hidden**"
             else:
                 setting = config.__dict__[key]
-            row = T.tr[T.td[key], T.td["="], T.td[setting]]
+            row = tags.tr[tags.td[key], tags.td["="], tags.td[setting]]
             table[row]
         return table
 
@@ -330,13 +343,13 @@ class WebInterface_controls(WebInterface_template):
     def render_message(self, ctx, data):
         request = inevow.IRequest(ctx)
         if request.args.get('shutdown'):
-            return T.b["Server is now shut down.  Attempts to reload this page will fail."]
+            return tags.b["Server is now shut down.  Attempts to reload this page will fail."]
         return ""
 
     def render_controls(self, ctx, data):
         request = inevow.IRequest(ctx)
         if request.args.get('shutdown'):
             return ""
-        return T.form(method="POST")[
-            T.input(type="submit", name="shutdown", value="Shut Down")
+        return tags.form(method="POST")[
+            tags.input(type="submit", name="shutdown", value="Shut Down")
         ]

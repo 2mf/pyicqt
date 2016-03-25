@@ -13,7 +13,7 @@ setup(
     name='pyicqt',
     version='8.1.6',
     description='ICQ Transport for Jabber, implemented with Python'
-                '  and Twisted',
+                ' and Twisted',
     author='Michael Franke',
     author_email='mf33456@gmail.com',
     url='https://github.com/2mf/pyicqt',
