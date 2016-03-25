@@ -3,13 +3,13 @@
 
 import os
 
-files = os.listdir("src/langs")
-for file in files:
-    if file == "__init__.py":
+files = os.listdir(os.path.dirname(__file__))
+for fname in files:
+    if fname == "__init__.py":
         continue
-    if file.endswith(".py"):
-        file = file.replace(".py", "")
+    if fname.endswith(".py"):
+        fname = fname.replace(".py", "")
         try:
-            exec("from %s import *" % file)
+            exec("from %s import *" % fname)
         except UnicodeDecodeError:
-            print "Unable to import language %s.\n" % file
+            print "Unable to import language %s.\n" % fname

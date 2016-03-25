@@ -1,6 +1,7 @@
 # Copyright 2004-2006 Daniel Henninger <jadestorm@nc.rr.com>
 # Licensed for distribution under the GPL version 2, check COPYING for details
 
+import imp
 import os
 import os.path
 import time
@@ -191,8 +192,9 @@ class PyTransport(component.Service):
 
         # Lets load the base and legacy service plugins
         self.serviceplugins = {}
-        self.loadPlugins("src/services")
-        self.loadPlugins("src/legacy/services")
+        dirname = os.path.dirname(__file__)
+        self.loadPlugins(os.path.join(dirname, "services"))
+        self.loadPlugins(os.path.join(dirname, "legacy", "services"))
 
         # Misc tracking variables
         self.startTime = int(time.time())
@@ -205,23 +207,26 @@ class PyTransport(component.Service):
         self.loopTask = task.LoopingCall(self.loopFunc)
         self.loopTask.start(60.0)
 
-    def loadPlugins(self, dir):
-        imppath = dir.replace("src/", "").replace("/", ".")
-        files = os.listdir(dir)
-        for file in files:
-            if file == "__init__.py":
+    def loadPlugins(self, dirname):
+        files = os.listdir(dirname)
+        for fname in files:
+            if fname == "__init__.py":
                 continue
-            if file.endswith(".py"):
-                classname = file.replace(".py", "")
-                if self.serviceplugins.has_key(classname):
-                    print "Unable to load service plugin %s: Duplicate plugin???" % classname
+            if fname.endswith(".py"):
+                fpath = os.path.join(dirname, fname)
+                classname = fname.replace(".py", "")
+                if classname in self.serviceplugins:
+                    print "Unable to load service plugin %s: Duplicate" \
+                          " plugin???" % classname
                     continue
                 try:
-                    exec("from %s import %s" % (imppath, classname))
-                    exec("self.serviceplugins['%s'] = %s.%s(self)" % (
-                        classname, classname, classname))
+                    clazz = imp.load_source(classname, fpath)
+                    self.serviceplugins[classname] = getattr(
+                        clazz, classname)(self)
+
                 except Exception, e:
-                    print "Unable to load service plugin %s: %s" % (classname, e)
+                    print "Unable to load service plugin %s: %s" % (
+                        classname, e)
                     raise
 
     def removeMe(self):
