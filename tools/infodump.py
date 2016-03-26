@@ -11,55 +11,49 @@ print "Python Version: " + sys.version
 print "Platform: " + sys.platform
 
 try:
-	from twisted.copyright import version
-	print "Twisted Version: " + version
+    from twisted.copyright import version
+    print "Twisted Version: " + version
 except:
-	print "Twisted Version: Unknown or Not Installed"
+    print "Twisted Version: Unknown or Not Installed"
 
 try:
-	from twisted.words import __version__
-	print "Twisted Words Version: " + __version__
+    from twisted.words import __version__
+    print "Twisted Words Version: " + __version__
 except:
-	print "Twisted Words Version: Unknown or Not Installed"
+    print "Twisted Words Version: Unknown or Not Installed"
 
 try:
-	from twisted.xish import __version__
-	print "Twisted Xish Version: " + __version__
+    from twisted.web import __version__
+    print "Twisted Web Version: " + __version__
 except:
-	print "Twisted Xish Version: Unknown or Not Installed"
+    print "Twisted web Version: Unknown or Not Installed"
 
 try:
-	from twisted.web import __version__
-	print "Twisted Web Version: " + __version__
+    from nevow import __version__
+    print "Nevow Version: " + __version__
 except:
-	print "Twisted web Version: Unknown or Not Installed"
+    print "Nevow Version: Unknown or Not Installed"
 
 try:
-	from nevow import __version__
-	print "Nevow Version: " + __version__
+    from PIL.Image import VERSION
+    print "Python Imaging Library (PIL) Version: " + VERSION
 except:
-	print "Nevow Version: Unknown or Not Installed"
+    print "Python Imaging Library (PIL) Version: Unknown or Not Installed"
 
 try:
-	from Image import VERSION
-	print "Python Imaging Library (PIL) Version: " + VERSION
+    from OpenSSL import __version__
+    print "pyOpenSSL Version: " + __version__
 except:
-	print "Python Imaging Library (PIL) Version: Unknown or Not Installed"
+    print "pyOpenSSL Version: Unknown or Not Installed"
 
 try:
-	from OpenSSL import __version__
-	print "pyOpenSSL Version: " + __version__
+    from Crypto import __version__
+    print "pycrypto Version: " + __version__
 except:
-	print "pyOpenSSL Version: Unknown or Not Installed"
+    print "pycrypto Version: Unknown or Not Installed"
 
 try:
-	from Crypto import __version__
-	print "pycrypto Version: " + __version__
+    from MySQLdb import __version__
+    print "MySQLdb Version: " + __version__
 except:
-	print "pycrypto Version: Unknown or Not Installed"
-
-try:
-	from MySQLdb import __version__
-	print "MySQLdb Version: " + __version__
-except:
-	print "MySQLdb Version: Unknown or Not Installed"
+    print "MySQLdb Version: Unknown or Not Installed"

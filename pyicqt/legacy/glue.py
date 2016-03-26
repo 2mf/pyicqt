@@ -4,7 +4,6 @@
 
 from twisted.words.xish.domish import Element
 from twisted.internet import protocol, reactor, defer, task
-
 from pyicqt import imgmanip
 from pyicqt import utils
 from pyicqt.tlib import oscar, socks5, sockserror

@@ -7,7 +7,9 @@ install_requires = [
     "psycopg2==2.6.1",
     "nevow==0.13.0",
     "pillow>=3.1.1",
-    "twisted>=12.3.0",
+    "pyOpenSSL>=16.0.0",
+    "pycrypto>=2.6.1",
+    "twisted>=12.3.0"
 ]
 
 setup(
